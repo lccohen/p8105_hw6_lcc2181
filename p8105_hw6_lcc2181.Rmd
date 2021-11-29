@@ -3,18 +3,21 @@ title: "p8105_hw6_lcc2181"
 output: github_document
 ---
 
-Loading the packages to complete Homework 6 and adding code to format for plots.
+This code chunk loads packages to complete Homework 6, adds formatting for plots, and sets a seed to ensure reproducibility.
 
 ```{r, message=FALSE}
 library(tidyverse)
 library(modelr)
 library(purrr)
+library(patchwork)
 
 knitr::opts_chunk$set(
   fig.width = 6,
   fig.asp = .6,
   out.width = "90%"
 )
+
+set.seed(1)
 ```
 
 ## Problem 1
@@ -104,3 +107,83 @@ cv_df %>%
 
 Based on this plot, the model I created (`fit`) performs better than the other two models (`fit_1` and `fit_2`).
 
+## Problem 2
+
+The code chunk below downloads 2017 Central Park weather data.
+
+```{r, message=FALSE}
+weather_df = 
+  rnoaa::meteo_pull_monitors(
+    c("USW00094728"),
+    var = c("PRCP", "TMIN", "TMAX"), 
+    date_min = "2017-01-01",
+    date_max = "2017-12-31") %>%
+  mutate(
+    name = recode(id, USW00094728 = "CentralPark_NY"),
+    tmin = tmin / 10,
+    tmax = tmax / 10) %>%
+  select(name, id, everything())
+```
+
+Drawing 5,000 bootstrap samples, and for each bootstrap sample, producing estimates of R-squared and log(beta0 * beta1)
+
+```{r, message=FALSE}
+bootstrap_results = 
+  weather_df %>% 
+  bootstrap(n = 5000) %>% 
+  mutate(
+    models = map(strap, ~lm(tmax ~ tmin, data = .x)),
+    results_1 = map(models, broom::glance),
+    results_2 = map(models, broom::tidy)
+  ) %>% 
+  select(results_1, results_2) %>% 
+  unnest(results_1, results_2) %>% 
+  select(r.squared, term, estimate) %>% 
+  pivot_wider(
+    names_from = "term",
+    values_from = "estimate"
+  ) %>% 
+  janitor::clean_names() %>% 
+  mutate(log_beta0_beta1 = log(intercept*tmin)) %>% 
+  select(-intercept, -tmin)
+```
+
+Plotting estimates for R-squared and log(beta0 * beta1)
+
+```{r}
+plot_1 =
+  bootstrap_results %>% 
+  ggplot(aes(x = r_squared)) +
+  geom_density()
+
+plot_2 =
+  bootstrap_results %>% 
+  ggplot(aes(x = log_beta0_beta1)) +
+  geom_density() +
+  labs(x = "log(beta0 * beta1)")
+
+plot_1 + plot_2
+```
+
+The distributions of R-squared and log(beta0 *beta1) both appear to be relatively normally distributed, although both are slightly left-tailed.
+
+The following code chunk identifies 2.5% and 97.5% quantiles for R-squared and log(beta0 * beta1):
+
+```{r}
+bootstrap_results %>%
+  summarize(
+    ci_rsquared_lower = quantile(r_squared, 0.025),
+    ci_rsquared_upper = quantile(r_squared, 0.975)
+  )
+
+bootstrap_results %>%
+  summarize(
+    ci_log_beta0_beta1_lower = quantile(log_beta0_beta1, 0.025),
+    ci_log_beta0_beta1_upper = quantile(log_beta0_beta1, 0.975)
+  )
+```
+
+Based on this output, the 95% CIs for R-squared and log(beta0 * beta1) are:
+
+* 95% CI for R-squared: (0.89, 0.93)
+* 95% CI for log(beta0 * beta1): (1.96, 2.06)
