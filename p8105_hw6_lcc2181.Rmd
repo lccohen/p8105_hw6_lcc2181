@@ -119,7 +119,7 @@ weather_df =
   select(name, id, everything())
 ```
 
-Drawing 5,000 bootstrap samples, and for each bootstrap sample, producing estimates of R-squared and log(beta0 * beta1)
+The code chunk below draws 5,000 bootstrap samples using the `bootstrap` function. After fitting a simple linear regression model with tmax as the outcome variable and tmin as the predictor variable, `broom::glance()` is utilized to extract the estimated r-squared for each bootstrap sample. Furthermore, `broom::tidy()` is utilized to extract the term (intercept or tmin) and associated parameter estimate for each bootstrap sample. I used `pivot_wider` to transform the output such that the parameter estimates for the intercept and tmin were variables in a resulting data frame with 5,000 observations; after transforming the data in this way, I computed log(beta_0 * beta_1) for each bootstrap sample.
 
 ```{r, message=FALSE}
 bootstrap_results = 
@@ -142,7 +142,7 @@ bootstrap_results =
   select(-intercept, -tmin)
 ```
 
-Plotting estimates for R-squared and log(beta0 * beta1)
+The plot below shows the distribution of estimates for r-squared and log(beta_0 * beta_1).
 
 ```{r}
 plot_1 =
@@ -154,14 +154,14 @@ plot_2 =
   bootstrap_results %>% 
   ggplot(aes(x = log_beta0_beta1)) +
   geom_density() +
-  labs(x = "log(beta0 * beta1)")
+  labs(x = "log(beta_0 * beta_1)")
 
 plot_1 + plot_2
 ```
 
-The distributions of R-squared and log(beta0 *beta1) both appear to be relatively normally distributed, although both are slightly left-tailed.
+The distribution of estimates for r-squared is slightly left-tailed. The estimates for log(beta_0 * beta_1) seem to be relatively normally distributed.
 
-The following code chunk identifies 2.5% and 97.5% quantiles for R-squared and log(beta0 * beta1):
+The following code chunk identifies 2.5% and 97.5% quantiles for r-squared and log(beta_0 * beta_1).
 
 ```{r}
 bootstrap_results %>%
@@ -177,7 +177,7 @@ bootstrap_results %>%
   )
 ```
 
-Based on this output, the 95% CIs for R-squared and log(beta0 * beta1) are:
+Based on this output, the 95% confidence intervals for r-squared and log(beta_0 * beta_1) are:
 
-* 95% CI for R-squared: (0.89, 0.93)
-* 95% CI for log(beta0 * beta1): (1.96, 2.06)
+* 95% CI for r-squared: (0.89, 0.93)
+* 95% CI for log(beta_0 * beta_1): (1.96, 2.06)
