@@ -22,11 +22,7 @@ set.seed(1)
 
 ## Problem 1
 
-Loading and cleaning data for regression analysis
-
-* Importing data
-* Converting categorical variables into factors
-* Checking for missing data
+The following code chunk loads and cleans data for regression analysis. Categorical variables (babysex, frace, malform, mrace) are converted into factors. Furthermore, the resulting data frame is checked for missing data. The output of this code shows that there are no missing values.
 
 ```{r, message=FALSE}
 birthweight_df =
@@ -43,17 +39,13 @@ birthweight_df %>%
   sum()
 ```
 
-Proposing a regression model for birthweight:
-
-* The model `fit` is based on a hypothesized structured for factors associated with birthweight
-* Specifically, the predictors included in the model were based on the following factors which may underly birthweight:
-baby's sex, baby's length at birth, baby's head circumference, mother's age, mother's race, gestational age, and number of cigarettes smoked per day during pregnancy
+The proposed regression model `fit` is based on a hypothesized structured for factors associated with birthweight. Specifically, the predictors included in the model were the following factors which may underly birthweight: baby's sex (babysex), baby's length at birth (blength), baby's head circumference (bhead), mother's age (momage), mother's race (mrace), gestational age (gaweeks), and number of cigarettes smoked per day, on average, during pregnancy (smoken).
 
 ```{r}
 fit = lm(bwt ~ babysex + blength + bhead + momage + mrace + gaweeks + smoken, data = birthweight_df)
 ```
 
-Plotting model residuals against fitted values:
+The following code chunk creates a scatter plot of residuals against fitted values for the proposed regression model `fit`, using `add_predictions` to obtain fitted values and `add_residuals` to obtain residuals.
 
 ```{r}
 birthweight_df %>% 
@@ -64,10 +56,12 @@ birthweight_df %>%
   labs(x = "Fitted Values", y = "Residuals")
 ```
 
-Comparing model `fit` to two other models in terms of cross-validated prediction error:
+Next, I compare my proposed regression model `fit` with two other models in terms of cross-validated prediction error:
 
-* `fit_1`: Model using length at birth and gestational age as predictors
-* `fit_2`: Model using head circumference, length at birth and sex (as well as all interactions between these) as predictors
+* `fit_1`: Model using length at birth as well as gestational age as predictors
+* `fit_2`: Model using head circumference, length at birth, and sex (as well as all interactions between these variables) as predictors
+
+To make this comparison, `crossv_mc` is used to perform multiple training/testing splits. Furthermore, `map` is used to fit the models and `map2_dbl` is used to obtain RMSEs.
 
 ```{r}
 cv_df =
@@ -90,7 +84,7 @@ cv_df =
   )
 ```
 
-Plotting distribution of RMSE for each model:
+The plot below displays the distribution of RMSE values for each of the three models (`fit`, `fit_1`, and `fit_2`):
 
 ```{r}
 cv_df %>% 
@@ -105,7 +99,7 @@ cv_df %>%
   geom_violin()
 ```
 
-Based on this plot, the model I created (`fit`) performs better than the other two models (`fit_1` and `fit_2`).
+Based on this plot, the model I proposed (`fit`) performs better than the other two models (`fit_1` and `fit_2`).
 
 ## Problem 2
 
